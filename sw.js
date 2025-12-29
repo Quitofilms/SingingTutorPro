@@ -1,15 +1,18 @@
-const CACHE_NAME = 'bass-tracker-v1.4';
+// VITAL: This name must be different from the Bass Tracker app
+const CACHE_NAME = 'singing-tutor-v1'; 
+
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json'
-  // If you add icons later, uncomment these lines:
+  // If you added icons, uncomment these lines:
   // './icon-192.png',
   // './icon-512.png'
 ];
 
-// Install Event: Cache files
+// Install Event: Cache new files
 self.addEventListener('install', (e) => {
+  self.skipWaiting(); // Forces the new worker to take over immediately
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
@@ -17,7 +20,7 @@ self.addEventListener('install', (e) => {
   );
 });
 
-// Activate Event: Clean up old caches
+// Activate Event: Delete old caches (including accidental Bass Tracker ones)
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keyList) => {
@@ -28,9 +31,10 @@ self.addEventListener('activate', (e) => {
       }));
     })
   );
+  return self.clients.claim();
 });
 
-// Fetch Event: Serve from Cache, fall back to Network
+// Fetch Event
 self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.match(e.request).then((response) => {
