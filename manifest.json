@@ -1,6 +1,6 @@
 {
-  "name": "Bass Tracker",
-  "short_name": "BassTracker",
+  "name": "Singing Tutor Pro",
+  "short_name": "SingingTutorPro",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#000000",
