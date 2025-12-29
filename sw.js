@@ -4,10 +4,10 @@ const CACHE_NAME = 'singing-tutor-v1';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './manifest.json'
-  // If you added icons, uncomment these lines:
-  // './icon-192.png',
-  // './icon-512.png'
+  './manifest.json',
+  // Icons are now active for the Singing Tutor:
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 // Install Event: Cache new files
