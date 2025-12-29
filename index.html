@@ -5,6 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#000000">
+    <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#000000">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Bass Tone & Volume Tracker v1.4</title>
     
     <!-- PWA Link -->
@@ -773,7 +777,13 @@
             const octave = Math.floor(noteIndex / 12) - 1;
             return note + octave;
         }
+        if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js');
+    });
+}
 
     </script>
 </body>
 </html>
+
