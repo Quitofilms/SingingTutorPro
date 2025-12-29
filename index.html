@@ -1,789 +1,781 @@
-<!-- Bass Tone & Volume Tracker v1.4 (PWA) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#000000">
-    <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
-<meta name="theme-color" content="#000000">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Bass Tone & Volume Tracker v1.4</title>
-    
-    <!-- PWA Link -->
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192.png">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Anchor: Secure Edition</title>
     <style>
         body {
-            background-color: #000;
+            background-color: #121212; 
             color: white;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-            user-select: none; /* Prevent text selection while dragging */
+            font-family: -apple-system, sans-serif;
+            margin: 0; height: 100vh; overflow: hidden;
+            display: flex; flex-direction: column;
+            user-select: none;
         }
 
-        /* =========================================
-           TOP SECTION: Calibration & Circle
-           ========================================= */
-        #top-section {
-            flex: 1; 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end; 
-            position: relative;
-            background-color: #000;
-            min-height: 150px; 
-            padding-bottom: 10px; 
+        /* --- SCREEN 1: BUILDER --- */
+        #screen-setup {
+            display: flex; flex-direction: column; 
+            height: 100%; width: 100%;
+            padding: 15px; box-sizing: border-box;
+            background: #1a1a1a;
+            z-index: 500;
+            overflow-y: auto;
         }
 
-        /* --- CALIBRATION SLIDER --- */
-        #calibration-bar {
-            position: absolute;
-            top: 20px;
-            width: 100%;
-            height: 80px; /* Height to fit 50px text */
-            z-index: 50;
-            overflow: hidden; /* Mask content */
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0));
-            display: flex;
-            align-items: center;
-            /* Fades on sides */
-            mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-            -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+        .builder-header { font-size: 20px; color: #888; text-transform: uppercase; margin-bottom: 10px; text-align: center; }
+        
+        #sequence-list {
+            flex: 1; background: #222; border-radius: 12px;
+            padding: 10px; overflow-y: auto; margin-bottom: 15px;
+            border: 1px solid #333;
+            display: flex; flex-wrap: wrap; align-content: flex-start; gap: 8px;
+            min-height: 150px;
         }
 
-        #calibration-strip {
-            display: flex;
-            align-items: center;
-            position: absolute;
-            left: 50%; /* Start positioning from center */
-            will-change: transform;
-            cursor: grab;
+        .seq-item {
+            background: #333; padding: 8px 8px 8px 15px; border-radius: 15px;
+            font-size: 16px; font-weight: bold; border: 1px solid #555;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .seq-item span { color: #0a84ff; }
+        
+        .btn-delete-note {
+            background: #ff3b30; color: white; border: none;
+            width: 24px; height: 24px; border-radius: 50%;
+            font-weight: bold; cursor: pointer; margin-left: auto;
+            display: flex; align-items: center; justify-content: center; font-size: 14px;
         }
 
-        #calibration-strip:active {
-            cursor: grabbing;
+        .octave-controls { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
+        .oct-btn {
+            background: #333; border: 2px solid #555; color: #888;
+            width: 50px; height: 40px; font-size: 18px; border-radius: 8px;
+        }
+        .oct-btn.active { border-color: #0a84ff; color: #fff; background: #004080; }
+
+        .keypad {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+            margin-bottom: 15px;
+        }
+        .note-btn {
+            background: #444; color: white; border: none;
+            height: 50px; font-size: 18px; border-radius: 8px; font-weight: bold;
+        }
+        .note-btn:active { background: #0a84ff; transform: scale(0.95); }
+        .note-btn.black-key { background: #222; border: 1px solid #444; }
+
+        .action-row { 
+            display: flex; gap: 10px; height: 60px; flex-shrink: 0;
+            margin-bottom: 80px; 
+        }
+        .action-btn { flex: 1; border: none; border-radius: 30px; font-size: 18px; font-weight: bold; }
+        .btn-clear { background: #ff3b30; color: white; flex: 0.5; }
+        .btn-go { background: #32d74b; color: black; }
+
+
+        /* --- SCREEN 2: PERFORMANCE --- */
+        #screen-performance {
+            display: none;
+            flex-direction: column; align-items: center;
+            height: 100%; width: 100%; position: relative;
+            padding-top: 10px;
         }
 
-        .cal-note {
-            font-size: 50px;
-            font-weight: 900;
-            width: 70px; /* Fixed width for calculation stability */
-            text-align: center;
-            flex-shrink: 0;
-            transition: color 0.1s;
-            line-height: 1;
-            /* Text shadow for visibility */
-            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        /* CONTROLS CONTAINER - 3 SPACIOUS ROWS */
+        #controls-container {
+            width: 95%; display: flex; flex-direction: column; gap: 8px;
+            background: rgba(30,30,30,0.8); padding: 10px; border-radius: 16px;
+            border: 1px solid #333; margin-bottom: 10px; z-index: 200;
         }
 
-        .cal-green { color: #00ff00; opacity: 0.6; }
-        .cal-yellow { color: #ffff00; transform: scale(1.1); opacity: 1; z-index: 10;}
-        .cal-red { color: #ff0000; opacity: 0.6; }
-
-        /* --- VISUALIZER --- */
-        #circle {
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            background-color: #333;
-            transition: background-color 0.1s ease;
-            box-shadow: 0 0 60px rgba(0,0,0,0.6);
-            margin-bottom: 5px; 
-            z-index: 1;
+        .control-row {
+            display: flex; justify-content: space-between; align-items: center; width: 100%;
         }
 
-        /* =========================================
-           BOTTOM SECTION: Data & Controls
-           ========================================= */
-        #bottom-section {
-            width: 100%;
-            background-color: #111; 
-            border-top: 2px solid #333; 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            padding-top: 10px; 
-            padding-bottom: 20px;
-            box-shadow: 0 -5px 30px rgba(0,0,0,0.5);
-            z-index: 20;
-            flex-shrink: 0; 
+        .ctrl-btn {
+            background: #222; border: 1px solid #444; color: #aaa;
+            padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: bold;
+            flex: 1; margin: 0 4px; text-align: center; cursor: pointer;
+        }
+        .ctrl-btn.active { background: #0a84ff; color: white; border-color: #0a84ff; }
+        .toggle-btn.active { background: #32d74b; color: #000; border-color: #32d74b; }
+        
+        #key-display { font-size: 14px; color: #fff; font-weight: bold; margin: 0 10px; min-width: 80px; text-align: center; }
+
+        #hud-next { 
+            font-size: 18px; color: #666; 
+            text-transform: uppercase; letter-spacing: 2px;
+            margin-bottom: 5px;
         }
 
-        #hz-display {
-            font-size: 20px; 
-            font-weight: normal;
-            color: #888; 
-            font-variant-numeric: tabular-nums;
-            margin-bottom: 0px;
-            line-height: 1;
+        /* MAIN STAGE - Pushed Down */
+        #stage-container { 
+            display: flex; flex-direction: row; align-items: center; 
+            justify-content: center; width: 100%; 
+            margin-top: 30px; /* Pushed down to fill gap */
+            margin-bottom: 30px;
+        }
+        
+        .side-panel { 
+            flex: 1; display: flex; flex-direction: column; 
+            justify-content: center; height: 160px; text-align: center;
+        }
+        #left-panel { text-align: right; padding-right: 15px; border-right: 1px solid #333; }
+        #right-panel { text-align: left; padding-left: 15px; border-left: 1px solid #333; }
+        
+        .panel-label { font-size: 12px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .note-display { font-size: 45px; font-weight: bold; color: #fff; } 
+        .lyric-display { font-size: 20px; color: #0a84ff; margin-bottom: 5px; }
+        #detected-note { color: #888; transition: color 0.1s; } 
+
+        #anchor-container { 
+            width: 130px; height: 130px; 
+            border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            position: relative; margin: 0 10px; 
+        }
+        
+        .progress-ring { 
+            position: absolute; top: 0; left: 0; width: 130px; height: 130px; 
+            transform: rotate(-90deg); pointer-events: none;
+        }
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.1s linear; 
+            transform-origin: 50% 50%;
+        }
+        
+        #anchor-core { 
+            width: 100px; height: 100px; 
+            border-radius: 50%; 
+            background-color: #333; transition: background-color 0.1s ease, box-shadow 0.1s ease;
+            box-shadow: 0 0 0 rgba(0,0,0,0); z-index: 10;
+        }
+        .locked { background-color: #32d74b !important; box-shadow: 0 0 40px #32d74b !important; transform: scale(1.1); }
+
+        /* NAV CONTROLS - Relative Positioning (Sits below Stage) */
+        .bottom-controls {
+            width: 100%; display: flex; justify-content: center; gap: 25px; 
+            margin-top: 10px; 
+        }
+        .nav-btn {
+            width: 60px; height: 60px; border-radius: 50%; border: none;
+            font-size: 24px; font-weight: bold; cursor: pointer;
+            background: #333; color: white; display: flex; align-items: center; justify-content: center;
+        }
+        .nav-btn:active { background: #555; }
+        #reset-btn { 
+            width: auto; padding: 0 30px; border-radius: 30px; 
+            font-size: 18px; background: #444; 
         }
 
-        #note-display {
-            font-size: 50px; 
-            font-weight: 900; 
-            color: white;     
-            line-height: 1.1;
-            margin: 5px 0 10px 0;
-            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        #volume-meter-container { 
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 8px; background: #222; 
+        }
+        #volume-meter { height: 100%; width: 0%; background: #0a84ff; transition: width 0.05s; }
+
+        /* COMPLETE SCREEN */
+        #complete-screen {
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            width: 100%; margin-top: 60px;
+        }
+        .complete-title { font-size: 40px; font-weight: bold; color: #32d74b; margin-bottom: 20px; text-align: center; }
+        .btn-restart { 
+            background: #333; color: white; border: 2px solid #555;
+            padding: 15px 40px; font-size: 20px; border-radius: 40px; cursor: pointer;
         }
 
-        #status {
-            font-size: 14px;
-            color: #555;
-            margin-bottom: 15px; 
-            height: 20px;
-            font-style: italic;
-        }
-
-        #controls-wrapper {
-            width: 90%;
-            max-width: 500px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px; 
-            align-items: center;
-        }
-
-        #start-btn {
-            width: 100%;
-            padding: 12px; 
-            font-size: 18px;
-            font-weight: bold;
-            background: #2196F3;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            transition: background 0.2s;
-        }
-        #start-btn:hover { background: #1976D2; }
-
-        select {
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #444;
-            background: #222;
-            color: white;
-            font-family: monospace;
-            width: 100%;
-            text-align: center;
-            font-size: 14px;
-        }
-
-        .slider-container {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 8px; 
-        }
-
-        .slider-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: #aaa;
-            font-size: 12px;
-            padding: 0 5px;
-        }
-
-        input[type=range] {
-            flex-grow: 1;
-            cursor: pointer;
-            height: 6px;
-            background: #444;
-            border-radius: 5px;
-            outline: none;
-            -webkit-appearance: none;
-            margin: 0 10px;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
-            background: #2196F3;
-            border-radius: 50%;
-        }
-
-        .button-row {
-            display: flex;
-            gap: 10px;
-            width: 100%;
-        }
-
-        .adjust-btn {
-            flex: 1; 
-            background: #333;
-            border: 1px solid #555;
-            color: white;
-            padding: 10px 0; 
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.1s;
-        }
-
-        .adjust-btn:active { background: #2196F3; border-color: #2196F3; }
-
-        #meter-wrapper {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        #meter-container {
-            width: 100%;
-            height: 15px; 
-            background-color: #222;
-            border-radius: 10px;
-            position: relative;
-            overflow: hidden;
-            border: 1px solid #444;
-        }
-
-        #meter-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(to right, #4CAF50, #FFEB3B, #F44336);
-            transition: width 0.1s ease-out;
-        }
-
-        #value-display {
-            font-family: monospace;
-            font-size: 12px;
-            color: #888;
-            text-align: right;
-            padding-right: 5px;
-        }
-
-        #error-msg { color: #ff5555; text-align: center; font-size: 12px; min-height: 15px;}
-        .hidden { display: none !important; }
+        .indicator-zone { width: 100%; position: fixed; transition: opacity 0.2s ease; opacity: 0.1; pointer-events: none; z-index: 50;}
+        #zone-sharp-red { top: 0; height: 5vh; background: linear-gradient(to bottom, #ff3b30, transparent); }
+        #zone-sharp-yellow { top: 5vh; height: 10vh; background: linear-gradient(to bottom, #ffcc00, transparent); }
+        #zone-flat-yellow { bottom: 5vh; height: 10vh; background: linear-gradient(to top, #ffcc00, transparent); }
+        #zone-flat-red { bottom: 0; height: 5vh; background: linear-gradient(to top, #ff3b30, transparent); }
 
     </style>
 </head>
 <body>
 
-    <!-- TOP: CALIBRATION & CIRCLE -->
-    <div id="top-section">
+    <div id="screen-setup">
+        <div class="builder-header">Create Melody</div>
+        <div id="sequence-list"><div style="color:#666; width:100%; text-align:center; margin-top:50px;">Tap keys below to add notes...</div></div>
         
-        <!-- Interactive Calibration Slider -->
-        <div id="calibration-bar">
-            <div id="calibration-strip">
-                <!-- JS will inject notes here -->
+        <div style="margin-top: auto;">
+            <div class="octave-controls">
+                <button class="oct-btn active" onclick="setOctave(2)">2</button>
+                <button class="oct-btn" onclick="setOctave(3)">3</button>
+                <button class="oct-btn" onclick="setOctave(4)">4</button>
             </div>
-        </div>
-
-        <div id="circle"></div>
-    </div>
-
-    <!-- BOTTOM: DATA & CONTROLS -->
-    <div id="bottom-section">
-        <div id="hz-display">-- Hz</div>
-        <div id="note-display">Silence</div>
-        <div id="status">Ready</div>
-
-        <div id="controls-wrapper">
-            <button id="start-btn">Start</button>
-
-            <div class="slider-container" id="sens-container">
-                <div class="slider-header">
-                    <span>Sensitivity</span>
-                    <input type="range" id="sensitivity" min="1" max="1000" value="50">
-                    <span id="sens-val">x50</span>
-                </div>
-
-                <div class="button-row">
-                    <button id="sens-dec-10" class="adjust-btn">-10</button>
-                    <button id="sens-dec-1" class="adjust-btn">-1</button>
-                    <button id="sens-inc-1" class="adjust-btn">+1</button>
-                    <button id="sens-inc-10" class="adjust-btn">+10</button>
-                </div>
+            <div class="keypad">
+                <button class="note-btn" onclick="addNote('C')">C</button>
+                <button class="note-btn black-key" onclick="addNote('C#')">C#</button>
+                <button class="note-btn" onclick="addNote('D')">D</button>
+                <button class="note-btn black-key" onclick="addNote('D#')">D#</button>
+                <button class="note-btn" onclick="addNote('E')">E</button>
+                <button class="note-btn" onclick="addNote('F')">F</button>
+                <button class="note-btn black-key" onclick="addNote('F#')">F#</button>
+                <button class="note-btn" onclick="addNote('G')">G</button>
+                <button class="note-btn black-key" onclick="addNote('G#')">G#</button>
+                <button class="note-btn" onclick="addNote('A')">A</button>
+                <button class="note-btn black-key" onclick="addNote('A#')">A#</button>
+                <button class="note-btn" onclick="addNote('B')">B</button>
             </div>
-
-            <select id="mic-select" class="hidden"></select>
-            
-            <div id="meter-wrapper">
-                <div id="meter-container">
-                    <div id="meter-fill"></div>
-                </div>
-                <div id="value-display">-- dB</div>
+            <div class="action-row">
+                <button class="action-btn btn-clear" onclick="clearSequence()">CLEAR ALL</button>
+                <button class="action-btn btn-go" onclick="launchPerformance()">LOAD SONG</button>
             </div>
-
-            <div id="error-msg"></div>
         </div>
     </div>
 
-    <script>
-        // --- PWA REGISTRATION ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker registered'))
-                    .catch(err => console.log('Service Worker failed', err));
-            });
-        }
+    <div id="screen-performance">
+        
+        <div id="controls-container">
+            <div class="control-row">
+                <button class="ctrl-btn" onclick="editSong()">EDIT SONG</button>
+                <div style="flex:2; display:flex; align-items:center; justify-content:center;">
+                    <button class="ctrl-btn" onclick="changeKey(-1)">Key -</button>
+                    <span id="key-display">KEY: 0</span>
+                    <button class="ctrl-btn" onclick="changeKey(1)">Key +</button>
+                </div>
+            </div>
+            <div class="control-row">
+                <button id="btn-drone" class="ctrl-btn toggle-btn" onclick="toggleDrone()">DRONE</button>
+                <button id="btn-haptic" class="ctrl-btn toggle-btn" onclick="toggleHaptic()">HAPTIC</button>
+                <button id="btn-tol-20" class="ctrl-btn" onclick="setTolerance(20)">TOL 20</button>
+                <button id="btn-tol-50" class="ctrl-btn active" onclick="setTolerance(50)">TOL 50</button>
+            </div>
+            <div class="control-row">
+                <button id="btn-auto" class="ctrl-btn active" onclick="toggleAuto()">AUTO</button>
+                <button id="btn-dur-250" class="ctrl-btn" onclick="setDuration(250)">0.25s</button>
+                <button id="btn-dur-500" class="ctrl-btn active" onclick="setDuration(500)">0.5s</button>
+                <button id="btn-dur-1500" class="ctrl-btn" onclick="setDuration(1500)">1.5s</button>
+            </div>
+        </div>
 
-        // --- CONFIGURATION ---
-        // Defaults (Will be overwritten by slider)
-        let breakFreq = 261.63; // Start at C4
+        <div id="hud-next">Next: ...</div>
+
+        <div id="stage-container">
+            <div id="left-panel" class="side-panel">
+                <div class="panel-label">Target</div>
+                <div id="current-lyric" class="lyric-display">Start</div>
+                <div id="target-note" class="note-display">--</div>
+            </div>
+
+            <div id="anchor-container">
+                <svg class="progress-ring">
+                    <circle class="progress-ring__circle" stroke="white" stroke-width="8" fill="transparent" r="60" cx="65" cy="65"/>
+                </svg>
+                <div id="anchor-core"></div>
+            </div>
+
+            <div id="right-panel" class="side-panel">
+                <div class="panel-label">You</div>
+                <div class="lyric-display" style="opacity:0;">.</div>
+                <div id="detected-note" class="note-display">--</div>
+            </div>
+        </div>
+
+        <div class="bottom-controls">
+            <button class="nav-btn" onclick="prevStep()">&lt;</button>
+            <button id="reset-btn" class="nav-btn" onclick="resetSequence()">RESET</button>
+            <button class="nav-btn" onclick="nextStep()">&gt;</button>
+        </div>
+
+        <div id="complete-screen">
+            <div class="complete-title">SONG COMPLETE</div>
+            <button class="btn-restart" onclick="resetSequence()">AGAIN?</button>
+        </div>
+
+        <div id="zone-sharp-red" class="indicator-zone"></div>
+        <div id="zone-sharp-yellow" class="indicator-zone"></div>
+        <div id="zone-flat-yellow" class="indicator-zone"></div>
+        <div id="zone-flat-red" class="indicator-zone"></div>
+        
+        <div id="volume-meter-container"><div id="volume-meter"></div></div>
+    </div>
+
+<script>
+    // --- STORAGE KEYS ---
+    const STORAGE_KEY_SONG = 'anchor_song_v1';
+    const STORAGE_KEY_SETTINGS = 'anchor_settings_v1';
+
+    // --- MOTIVATIONAL PHRASES ---
+    const MOTIVATIONAL_PHRASES = [
+        "You Got This!",
+        "Well Done!",
+        "Fantastic!",
+        "Great Job!",
+        "Nailed It!",
+        "Outstanding!"
+    ];
+
+    // --- SAFE HELPER ---
+    function setText(id, text) {
+        const el = document.getElementById(id);
+        if (el) el.innerText = text;
+    }
+
+    // --- BUILDER LOGIC ---
+    let builderSequence = [];
+    let currentOctave = 2;
+
+    function setOctave(oct) {
+        currentOctave = oct;
+        document.querySelectorAll('.oct-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+
+    function addNote(noteName) {
         const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-        
-        // --- CALIBRATION SLIDER LOGIC ---
-        const strip = document.getElementById('calibration-strip');
-        const NOTE_WIDTH = 70; // Must match CSS .cal-note width
-        const MIDI_START = 40; // E2
-        const MIDI_END = 72;   // C5
-        let notesElements = [];
-        let currentTranslate = 0;
-        let isDragging = false;
-        let startX = 0;
-        let startTranslate = 0;
+        let semitone = notes.indexOf(noteName);
+        let midi = (currentOctave + 1) * 12 + semitone;
+        let freq = 440 * Math.pow(2, (midi - 69) / 12);
+        let noteObj = { label: `Step ${builderSequence.length + 1}`, note: noteName, octave: currentOctave, freq: freq };
+        builderSequence.push(noteObj);
+        renderSequenceList();
+        saveData(); // AUTO SAVE
+    }
 
-        // Init Slider
-        function initSlider() {
-            // 1. Generate Notes
-            for (let m = MIDI_START; m <= MIDI_END; m++) {
-                const noteName = getNoteFromMidi(m);
-                const el = document.createElement('div');
-                el.className = 'cal-note';
-                el.textContent = noteName;
-                el.dataset.midi = m;
-                el.dataset.freq = 440 * Math.pow(2, (m - 69) / 12);
-                strip.appendChild(el);
-                notesElements.push(el);
-            }
+    function removeNote(index) {
+        builderSequence.splice(index, 1);
+        renderSequenceList();
+        saveData(); // AUTO SAVE
+    }
 
-            // 2. Center on C4 (MIDI 60)
-            const c4Index = 60 - MIDI_START;
-            // Center calculation: 
-            // We want the center of the C4 element to be at X=0 (relative to strip center anchor)
-            // Strip is absolutely positioned left: 50%.
-            // So translate = - (Index * Width) - (Width/2)
-            currentTranslate = - (c4Index * NOTE_WIDTH) - (NOTE_WIDTH / 2);
-            setTranslate(currentTranslate);
-            updateCalibration();
+    function clearSequence() {
+        builderSequence = [];
+        renderSequenceList();
+        saveData(); // AUTO SAVE
+    }
 
-            // 3. Events
-            const container = document.getElementById('calibration-bar');
-            
-            // Mouse
-            container.addEventListener('mousedown', dragStart);
-            window.addEventListener('mouseup', dragEnd);
-            window.addEventListener('mousemove', drag);
-            
-            // Touch
-            container.addEventListener('touchstart', dragStart, {passive: false});
-            window.addEventListener('touchend', dragEnd);
-            window.addEventListener('touchmove', drag, {passive: false});
+    function renderSequenceList() {
+        const list = document.getElementById('sequence-list');
+        list.innerHTML = "";
+        if (builderSequence.length === 0) {
+            list.innerHTML = '<div style="color:#666; width:100%; text-align:center; margin-top:50px;">Tap keys below to add notes...</div>';
+            return;
         }
-
-        function getNoteFromMidi(midi) {
-            const note = notes[midi % 12];
-            const octave = Math.floor(midi / 12) - 1;
-            return note + octave;
-        }
-
-        function setTranslate(val) {
-            // Bounds checking (roughly)
-            const max = - (NOTE_WIDTH / 2); // Leftmost note (E2) at center
-            const min = - ((notesElements.length - 1) * NOTE_WIDTH) - (NOTE_WIDTH / 2); // Rightmost note at center
-            
-            // Allow some overdrag
-            if (val > max + 100) val = max + 100;
-            if (val < min - 100) val = min - 100;
-            
-            strip.style.transform = `translateX(${val}px)`;
-        }
-
-        function dragStart(e) {
-            isDragging = true;
-            startX = getPositionX(e);
-            startTranslate = currentTranslate;
-            strip.style.transition = 'none'; // Disable transition for direct control
-        }
-
-        function drag(e) {
-            if (!isDragging) return;
-            e.preventDefault(); // Prevent scroll
-            const currentX = getPositionX(e);
-            const diff = currentX - startX;
-            currentTranslate = startTranslate + diff;
-            setTranslate(currentTranslate);
-            updateCalibration();
-        }
-
-        function dragEnd() {
-            isDragging = false;
-            strip.style.transition = 'transform 0.2s ease-out';
-            // Optional: Snap to nearest note
-            const relativePos = Math.abs(currentTranslate); 
-            // Math is tricky here because translate is negative.
-            // Index = (-translate - width/2) / width
-            let rawIndex = (-currentTranslate - (NOTE_WIDTH/2)) / NOTE_WIDTH;
-            let snapIndex = Math.round(rawIndex);
-            
-            // Clamp index
-            snapIndex = Math.max(0, Math.min(notesElements.length - 1, snapIndex));
-            
-            currentTranslate = - (snapIndex * NOTE_WIDTH) - (NOTE_WIDTH / 2);
-            setTranslate(currentTranslate);
-            updateCalibration(); // Final update after snap
-        }
-
-        function getPositionX(e) {
-            return e.type.includes('mouse') ? e.pageX : e.touches[0].pageX;
-        }
-
-        function updateCalibration() {
-            // Determine which note is closest to center
-            // Logic inverse of translate calc
-            let centerIndex = Math.round((-currentTranslate - (NOTE_WIDTH/2)) / NOTE_WIDTH);
-            centerIndex = Math.max(0, Math.min(notesElements.length - 1, centerIndex));
-
-            // Visual Updates
-            notesElements.forEach((el, index) => {
-                el.className = 'cal-note'; // Reset
-                if (index < centerIndex) el.classList.add('cal-green');
-                else if (index > centerIndex) el.classList.add('cal-red');
-                else {
-                    el.classList.add('cal-yellow');
-                    // Update global break frequency
-                    breakFreq = parseFloat(el.dataset.freq);
-                }
-            });
-        }
-
-        // Initialize Slider on Load
-        initSlider();
-
-
-        // --- AUDIO GLOBALS ---
-        let audioContext;
-        let bassAnalyser;
-        let volAnalyser;
-        let microphone;
-        let isRunning = false;
-        let currentStream = null;
-        let bassDataArray;
-        let volDataArray;
-        let silenceTimer = 0;
-
-        // --- DOM ELEMENTS ---
-        const startBtn = document.getElementById('start-btn');
-        const micSelect = document.getElementById('mic-select');
-        const errorMsg = document.getElementById('error-msg');
-        
-        const meterFill = document.getElementById('meter-fill');
-        const valueDisplay = document.getElementById('value-display');
-        const sensitivitySlider = document.getElementById('sensitivity');
-        const sensValDisplay = document.getElementById('sens-val');
-        
-        const circle = document.getElementById('circle');
-        const hzDisplay = document.getElementById('hz-display');
-        const noteDisplay = document.getElementById('note-display');
-        const statusDisplay = document.getElementById('status');
-
-        // --- EVENT LISTENERS ---
-
-        document.body.addEventListener('touchstart', function() {
-            if (audioContext && audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
-        }, { passive: true });
-
-        // Sensitivity Controls
-        function updateSensDisplay() {
-            sensValDisplay.textContent = 'x' + sensitivitySlider.value;
-        }
-
-        function adjustSensitivity(amount) {
-            let current = parseInt(sensitivitySlider.value);
-            let newValue = current + amount;
-            newValue = Math.max(1, Math.min(1000, newValue));
-            sensitivitySlider.value = newValue;
-            updateSensDisplay();
-            localStorage.setItem('bass_sens', newValue);
-        }
-
-        updateSensDisplay();
-
-        sensitivitySlider.addEventListener('input', () => {
-            updateSensDisplay();
-            localStorage.setItem('bass_sens', sensitivitySlider.value);
+        builderSequence.forEach((item, index) => {
+            let div = document.createElement('div');
+            div.className = 'seq-item';
+            div.innerHTML = `${index + 1}. <span>${item.note}${item.octave}</span><button class="btn-delete-note" onclick="removeNote(${index})">×</button>`;
+            list.appendChild(div);
         });
+    }
 
-        document.getElementById('sens-dec-10').addEventListener('click', () => adjustSensitivity(-10));
-        document.getElementById('sens-dec-1').addEventListener('click', () => adjustSensitivity(-1));
-        document.getElementById('sens-inc-1').addEventListener('click', () => adjustSensitivity(1));
-        document.getElementById('sens-inc-10').addEventListener('click', () => adjustSensitivity(10));
+    function launchPerformance() {
+        try {
+            if (builderSequence.length === 0) { alert("Please add at least one note!"); return; }
+            baseSequence = builderSequence; 
+            resetSequence(); 
+            document.getElementById('screen-setup').style.display = 'none';
+            document.getElementById('screen-performance').style.display = 'flex';
+            startApp(); 
+        } catch(e) { alert(e); }
+    }
+    
+    function editSong() {
+        stopDrone(); 
+        document.getElementById('screen-performance').style.display = 'none';
+        document.getElementById('screen-setup').style.display = 'flex';
+    }
 
-        // Start & Mic Select
-        startBtn.addEventListener('click', async () => {
-            await startAudio();
-        });
+    // --- SAVE / LOAD SYSTEM ---
+    function saveData() {
+        try {
+            // Save Song
+            localStorage.setItem(STORAGE_KEY_SONG, JSON.stringify(builderSequence));
+            
+            // Save Settings
+            const settings = {
+                tol: GREEN_LIMIT,
+                dur: AUTO_ADVANCE_DURATION,
+                auto: AUTO_ADVANCE_ENABLED
+            };
+            localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
+        } catch(e) { console.warn("Save failed", e); }
+    }
 
-        micSelect.addEventListener('change', async (e) => {
-            localStorage.setItem('bass_mic_id', e.target.value);
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
+    function loadData() {
+        try {
+            // Load Song
+            const songData = localStorage.getItem(STORAGE_KEY_SONG);
+            if (songData) {
+                builderSequence = JSON.parse(songData);
+                renderSequenceList();
             }
-            await startAudio(e.target.value);
-        });
 
-        // --- AUDIO INITIALIZATION ---
-
-        async function startAudio(deviceId = null) {
-            try {
-                errorMsg.textContent = "";
-                statusDisplay.textContent = "Initializing...";
-
-                if (!audioContext) {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            // Load Settings
+            const setStr = localStorage.getItem(STORAGE_KEY_SETTINGS);
+            if (setStr) {
+                const s = JSON.parse(setStr);
+                if (s.tol) setTolerance(s.tol);
+                if (s.dur) setDuration(s.dur);
+                if (typeof s.auto !== 'undefined') {
+                    AUTO_ADVANCE_ENABLED = !s.auto; // Toggle flips it, so set opposite first
+                    toggleAuto(); // Flip to correct state
                 }
-
-                if (audioContext.state === 'suspended') {
-                    await audioContext.resume();
-                }
-
-                startBtn.classList.add('hidden');
-                micSelect.classList.remove('hidden');
-                
-                if (!deviceId) {
-                    const savedMic = localStorage.getItem('bass_mic_id');
-                    const savedSens = localStorage.getItem('bass_sens');
-                    if (savedSens) {
-                        sensitivitySlider.value = savedSens;
-                        updateSensDisplay();
-                    }
-                    if (savedMic) deviceId = savedMic;
-                }
-                
-                if ('wakeLock' in navigator) {
-                    try { await navigator.wakeLock.request('screen'); } catch(err) {}
-                }
-
-                const constraints = { 
-                    audio: { 
-                        deviceId: deviceId ? { exact: deviceId } : undefined,
-                        echoCancellation: false,
-                        noiseSuppression: false,
-                        autoGainControl: false 
-                    } 
-                };
-
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                currentStream = stream;
-
-                if (microphone) microphone.disconnect();
-                if (bassAnalyser) bassAnalyser.disconnect();
-                if (volAnalyser) volAnalyser.disconnect();
-
-                microphone = audioContext.createMediaStreamSource(stream);
-
-                bassAnalyser = audioContext.createAnalyser();
-                bassAnalyser.fftSize = 32768; 
-                bassAnalyser.smoothingTimeConstant = 0.85;
-                microphone.connect(bassAnalyser);
-                bassDataArray = new Float32Array(bassAnalyser.frequencyBinCount);
-
-                volAnalyser = audioContext.createAnalyser();
-                volAnalyser.fftSize = 2048; 
-                volAnalyser.smoothingTimeConstant = 0.3;
-                microphone.connect(volAnalyser);
-                volDataArray = new Float32Array(volAnalyser.fftSize);
-
-                const gainNode = audioContext.createGain();
-                gainNode.gain.value = 0.0; 
-                microphone.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-
-                if (micSelect.options.length === 0) {
-                    await populateDeviceList();
-                }
-
-                const currentTrack = currentStream.getAudioTracks()[0];
-                const settings = currentTrack.getSettings();
-                if (settings.deviceId) {
-                    micSelect.value = settings.deviceId;
-                    localStorage.setItem('bass_mic_id', settings.deviceId);
-                }
-
-                statusDisplay.textContent = "Listening...";
-                
-                if (!isRunning) {
-                    isRunning = true;
-                    animationLoop();
-                }
-
-            } catch (err) {
-                console.error(err);
-                if (err.name === 'OverconstrainedError' && localStorage.getItem('bass_mic_id')) {
-                    localStorage.removeItem('bass_mic_id');
-                    return startAudio(null);
-                }
-                startBtn.classList.remove('hidden');
-                errorMsg.textContent = "Error: " + err.message;
             }
+        } catch(e) { console.warn("Load failed", e); }
+    }
+
+    // --- PERFORMANCE ENGINE ---
+    let GREEN_LIMIT = 50;  
+    let AUTO_ADVANCE_DURATION = 500; 
+    let AUTO_ADVANCE_ENABLED = true;
+    const YELLOW_LIMIT = 80; 
+
+    let baseSequence = [];
+    let currentTranspose = 0; 
+    let currentIndex = 0;
+    let audioContext, analyser, microphone;
+    let isRunning = false;
+    let audioBuffer = new Float32Array(2048);
+    
+    let lastCents = 0; 
+    const smoothingFactor = 0.8; 
+    let noteHoldStartTime = 0; 
+    let droneActive = false;
+    let hapticActive = false;
+    let droneOsc = null;
+    let droneGain = null;
+    let lastHapticTime = 0;
+
+    // SVG Ring Setup (Radius 60 -> Circumference ~377)
+    const circle = document.querySelector('.progress-ring__circle');
+    const circumference = 60 * 2 * Math.PI; 
+    if(circle) {
+        circle.style.strokeDasharray = `${circumference} ${circumference}`;
+        circle.style.strokeDashoffset = circumference;
+    }
+
+    function setProgress(percent) {
+        if(!circle) return;
+        const offset = circumference - percent / 100 * circumference;
+        circle.style.strokeDashoffset = offset;
+    }
+
+    const NOTES_SHARP = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    const NOTES_FLAT  = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+
+    function setTolerance(val) {
+        GREEN_LIMIT = val;
+        document.getElementById('btn-tol-20').classList.remove('active');
+        document.getElementById('btn-tol-50').classList.remove('active');
+        document.getElementById(`btn-tol-${val}`).classList.add('active');
+        saveData(); // Auto save setting
+    }
+
+    function setDuration(val) {
+        AUTO_ADVANCE_DURATION = val;
+        document.getElementById('btn-dur-250').classList.remove('active');
+        document.getElementById('btn-dur-500').classList.remove('active');
+        document.getElementById('btn-dur-1500').classList.remove('active');
+        document.getElementById(`btn-dur-${val}`).classList.add('active');
+        saveData(); // Auto save setting
+    }
+
+    function toggleAuto() {
+        AUTO_ADVANCE_ENABLED = !AUTO_ADVANCE_ENABLED;
+        const btn = document.getElementById('btn-auto');
+        if (AUTO_ADVANCE_ENABLED) {
+            btn.classList.add('active');
+            btn.innerText = "AUTO";
+        } else {
+            btn.classList.remove('active');
+            btn.innerText = "MANUAL";
         }
+        saveData(); // Auto save setting
+    }
 
-        async function populateDeviceList() {
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const audioInputs = devices.filter(device => device.kind === 'audioinput');
-                
-                micSelect.innerHTML = '';
-                audioInputs.forEach(device => {
-                    const option = document.createElement('option');
-                    option.value = device.deviceId;
-                    option.text = device.label || `Microphone ${micSelect.length + 1}`;
-                    micSelect.appendChild(option);
-                });
-                
-                if (currentStream) {
-                    const track = currentStream.getAudioTracks()[0];
-                    if (track && track.getSettings().deviceId) {
-                        micSelect.value = track.getSettings().deviceId;
-                    }
-                }
+    function toggleDrone() {
+        droneActive = !droneActive;
+        const btn = document.getElementById('btn-drone');
+        if (droneActive) { btn.classList.add('active'); startDrone(); } 
+        else { btn.classList.remove('active'); stopDrone(); }
+    }
 
-            } catch (e) {
-                console.error("Device list error", e);
-            }
+    function toggleHaptic() {
+        hapticActive = !hapticActive;
+        const btn = document.getElementById('btn-haptic');
+        if (hapticActive) btn.classList.add('active');
+        else btn.classList.remove('active');
+    }
+
+    function startDrone() {
+        if (!audioContext) return;
+        if (droneOsc) stopDrone(); 
+        if (currentIndex >= baseSequence.length) return;
+
+        const step = baseSequence[currentIndex];
+        const freq = getTargetFreq(step.freq);
+        droneOsc = audioContext.createOscillator();
+        droneOsc.type = 'sawtooth'; 
+        droneOsc.frequency.value = freq;
+        const filter = audioContext.createBiquadFilter();
+        filter.type = 'lowpass'; filter.frequency.value = 600; 
+        droneGain = audioContext.createGain();
+        droneGain.gain.value = 0.2; 
+        droneOsc.connect(filter); filter.connect(droneGain); droneGain.connect(audioContext.destination);
+        droneOsc.start();
+    }
+
+    function stopDrone() {
+        if (droneOsc) { try { droneOsc.stop(); } catch(e){} droneOsc = null; }
+    }
+
+    function updateDroneFreq() {
+        if (!droneActive || !droneOsc || currentIndex >= baseSequence.length) return;
+        const step = baseSequence[currentIndex];
+        const freq = getTargetFreq(step.freq);
+        droneOsc.frequency.setTargetAtTime(freq, audioContext.currentTime, 0.1);
+    }
+
+    function triggerHaptic(cents) {
+        if (!hapticActive || !navigator.vibrate) return;
+        const now = Date.now();
+        if (now - lastHapticTime < 200) return; 
+        if (cents > GREEN_LIMIT) { navigator.vibrate([30, 30, 30]); lastHapticTime = now; } 
+        else if (cents < -GREEN_LIMIT) { navigator.vibrate([100]); lastHapticTime = now + 100; }
+    }
+
+    function nextStep() {
+        if (currentIndex < baseSequence.length - 1) {
+            currentIndex++;
+            resetNoteState();
+            updateTargetDisplay();
+        } else {
+            showComplete();
         }
+    }
 
-        // --- MAIN LOOP ---
+    function prevStep() {
+        if (document.getElementById('complete-screen').style.display === 'flex') {
+            document.getElementById('stage-container').style.display = 'flex';
+            document.getElementById('complete-screen').style.display = 'none';
+            updateTargetDisplay(); return;
+        }
+        if (currentIndex > 0) {
+            currentIndex--;
+            resetNoteState();
+            updateTargetDisplay();
+        }
+    }
+    
+    function showComplete() {
+        stopDrone();
+        document.getElementById('stage-container').style.display = 'none';
+        const screen = document.getElementById('complete-screen');
+        screen.style.display = 'flex';
+        
+        // Random Phrase Logic
+        const phrase = MOTIVATIONAL_PHRASES[Math.floor(Math.random() * MOTIVATIONAL_PHRASES.length)];
+        document.querySelector('.complete-title').innerText = phrase;
 
-        function animationLoop() {
-            if (!isRunning) return;
-            updateVolume();
+        setText('hud-next', "");
+    }
+    
+    function resetNoteState() {
+        noteHoldStartTime = 0;
+        lastCents = 0; 
+        setProgress(0);
+        document.getElementById('anchor-core').classList.remove('locked');
+        resetVisuals();
+    }
+
+    function changeKey(delta) {
+        currentTranspose += delta;
+        setText('key-display', `KEY: ${currentTranspose > 0 ? '+' : ''}${currentTranspose}`);
+        updateTargetDisplay(); 
+    }
+
+    function getTransposedNote(baseNoteStr, octave, semitones) {
+        let index = NOTES_SHARP.indexOf(baseNoteStr);
+        if (index === -1) index = NOTES_FLAT.indexOf(baseNoteStr);
+        let newIndex = index + semitones;
+        let octaveShift = Math.floor(newIndex / 12);
+        let normalizedIndex = ((newIndex % 12) + 12) % 12;
+        let newNoteName = NOTES_SHARP[normalizedIndex];
+        let newOctave = octave + octaveShift;
+        return `${newNoteName}${newOctave}`;
+    }
+
+    function getTargetFreq(baseFreq) {
+        return baseFreq * Math.pow(2, currentTranspose / 12);
+    }
+
+    function getNoteFromFreq(freq) {
+        let noteNum = 12 * (Math.log(freq / 440) / Math.log(2));
+        let midi = Math.round(noteNum) + 69;
+        let noteIndex = midi % 12;
+        let octave = Math.floor(midi / 12) - 1;
+        if (noteIndex < 0) noteIndex = 0;
+        return NOTES_SHARP[noteIndex] + octave;
+    }
+
+    function startApp() {
+        if (isRunning) return; 
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioContext.state === 'suspended') audioContext.resume();
+        navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, autoGainControl: false, noiseSuppression: false } })
+        .then(stream => {
+            microphone = audioContext.createMediaStreamSource(stream);
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048;
+            microphone.connect(analyser);
+            isRunning = true;
+            updateTargetDisplay();
             updatePitch();
-            requestAnimationFrame(animationLoop);
+        })
+        .catch(err => { console.error(err); });
+    }
+
+    function resetSequence() {
+        currentIndex = 0;
+        resetNoteState();
+        document.getElementById('stage-container').style.display = 'flex';
+        document.getElementById('complete-screen').style.display = 'none';
+        updateTargetDisplay();
+        if (audioContext && audioContext.state === 'suspended') { audioContext.resume(); }
+    }
+
+    function autoCorrelate(buf, sampleRate) {
+        let SIZE = buf.length, rms = 0;
+        for (let i=0; i<SIZE; i++) rms += buf[i]*buf[i];
+        rms = Math.sqrt(rms/SIZE);
+        document.getElementById('volume-meter').style.width = Math.min(rms * 1000, 100) + "%";
+        
+        if (rms < 0.01) return -1; 
+
+        let r1=0, r2=SIZE-1, thres=0.05; 
+        for (let i=0; i<SIZE/2; i++) if (Math.abs(buf[i])<thres) { r1=i; break; }
+        for (let i=1; i<SIZE/2; i++) if (Math.abs(buf[SIZE-i])<thres) { r2=SIZE-i; break; }
+        buf = buf.slice(r1, r2);
+        SIZE = buf.length;
+
+        let c = new Array(SIZE).fill(0);
+        for (let i=0; i<SIZE; i++) for (let j=0; j<SIZE-i; j++) c[i] = c[i] + buf[j]*buf[j+i];
+        let d=0; while (c[d] > c[d+1]) d++;
+        let maxval=-1, maxpos=-1;
+        for (let i=d; i<SIZE; i++) if (c[i] > maxval) { maxval=c[i]; maxpos=i; }
+        let T0 = maxpos;
+        let x1=c[T0-1], x2=c[T0], x3=c[T0+1];
+        let a = (x1+x3-2*x2)/2, b = (x3-x1)/2;
+        if (a) T0 = T0 - b/(2*a);
+        return sampleRate/T0;
+    }
+
+    function updatePitch() {
+        if (!isRunning) return;
+        analyser.getFloatTimeDomainData(audioBuffer);
+        let ac = autoCorrelate(audioBuffer, audioContext.sampleRate);
+        if (ac > 600) ac = -1; // Bass Ceiling
+        if (ac === -1) {
+            resetVisuals();
+            noteHoldStartTime = 0; 
+            setProgress(0);
+        } else {
+            processPitch(ac);
         }
+        requestAnimationFrame(updatePitch);
+    }
 
-        function updateVolume() {
-            volAnalyser.getFloatTimeDomainData(volDataArray);
-            let sumSquares = 0.0;
-            for (const amplitude of volDataArray) sumSquares += amplitude * amplitude;
-            let rms = Math.sqrt(sumSquares / volDataArray.length);
+    function processPitch(pitch) {
+        if (baseSequence.length === 0) return;
+        if (document.getElementById('complete-screen').style.display === 'flex') return;
 
-            if (rms < 0.0001) {
-                silenceTimer++;
-                if (silenceTimer > 180) errorMsg.textContent = "No signal. Check Mic.";
-            } else {
-                silenceTimer = 0;
-                errorMsg.textContent = "";
-            }
+        const step = baseSequence[currentIndex];
+        const targetFreq = getTargetFreq(step.freq);
+        
+        let centsOff = 1200 * Math.log2(pitch / targetFreq);
+        while (centsOff > 600) centsOff -= 1200;
+        while (centsOff < -600) centsOff += 1200;
 
-            const boost = parseFloat(sensitivitySlider.value);
-            const boostedRMS = rms * boost;
-            let db = 20 * Math.log10(rms);
-            if (!isFinite(db)) db = -100;
-            let visualWidth = Math.min(Math.sqrt(boostedRMS), 1.0);
-            meterFill.style.width = (visualWidth * 100) + "%";
-            valueDisplay.innerHTML = `${Math.round(db)} dB`;
-            if (rms === 0) valueDisplay.style.color = "#555";
-            else valueDisplay.style.color = "#aaa";
-        }
-
-        function updatePitch() {
-            bassAnalyser.getFloatFrequencyData(bassDataArray);
-            const sampleRate = audioContext.sampleRate;
-            const resolution = sampleRate / bassAnalyser.fftSize;
-            const minBin = Math.floor(60 / resolution); 
-            const maxBin = Math.floor(400 / resolution);
+        // --- MASTERY LOGIC (Raw) ---
+        if (Math.abs(centsOff) <= GREEN_LIMIT) {
+            if (noteHoldStartTime === 0) { noteHoldStartTime = performance.now(); }
             
-            let maxHPS = -Infinity;
-            let peakBin = -1;
+            let elapsed = performance.now() - noteHoldStartTime;
+            let percent = Math.min((elapsed / AUTO_ADVANCE_DURATION) * 100, 100);
+            setProgress(percent);
 
-            for (let i = minBin; i < maxBin; i++) {
-                let h1 = bassDataArray[i];              
-                let h2 = bassDataArray[i * 2] || -100; 
-                let h3 = bassDataArray[i * 3] || -100; 
-                if (h1 < -90) continue;
-                let hpsValue = h1 + (0.8 * h2) + (0.6 * h3);
-                if (hpsValue > maxHPS) {
-                    maxHPS = hpsValue;
-                    peakBin = i;
-                }
+            // ONLY ADVANCE IF AUTO IS ENABLED
+            if (AUTO_ADVANCE_ENABLED && elapsed > AUTO_ADVANCE_DURATION) {
+                nextStep();
+                return;
             }
-
-            const maxVol = Math.max(...bassDataArray);
-            if (maxVol < -90) {
-                 updateBassUI(0);
-                 return;
-            }
-
-            const fundamentalFreq = peakBin * resolution;
-            determineColor(fundamentalFreq);
+        } else {
+            noteHoldStartTime = 0;
+            setProgress(0);
+            triggerHaptic(centsOff);
         }
 
-        function determineColor(freq) {
-            if (freq < 60) return; 
+        // --- VISUAL SMOOTHING ---
+        lastCents = (lastCents * smoothingFactor) + (centsOff * (1 - smoothingFactor));
+        updateVisuals(lastCents, pitch);
+    }
 
-            const noteName = getNote(freq);
-            hzDisplay.textContent = Math.round(freq) + " Hz";
-            noteDisplay.textContent = noteName;
+    function updateVisuals(cents, pitchHz) {
+        document.querySelectorAll('.indicator-zone').forEach(el => el.style.opacity = '0.1');
+        const core = document.getElementById('anchor-core');
+        const detectedEl = document.getElementById('detected-note');
+        
+        core.classList.remove('locked');
+        detectedEl.innerText = getNoteFromFreq(pitchHz);
 
-            // Updated Color Logic based on Calibration Slider
-            // breakFreq is determined by the center slider note
-            // We use a small tolerance (approx semitone) for Yellow
-            
-            // Calculate semitone distance from breakFreq
-            // 12 * log2(freq / breakFreq)
-            const semitonesDiff = 12 * Math.log2(freq / breakFreq);
-
-            if (semitonesDiff < -0.5) {
-                // Lower than break = Green (Bass)
-                circle.style.backgroundColor = "#00ff00"; 
-                hzDisplay.style.color = "#fff";
-            } else if (semitonesDiff > 0.5) {
-                // Higher than break = Red
-                circle.style.backgroundColor = "#ff0000"; 
-                hzDisplay.style.color = "#ff0000";
-            } else {
-                // Within 0.5 semitones = Yellow (The Break)
-                circle.style.backgroundColor = "#ffff00"; 
-                hzDisplay.style.color = "#ffff00";
-            }
+        if (Math.abs(cents) <= GREEN_LIMIT) {
+            core.classList.add('locked');
+            detectedEl.style.color = "#32d74b"; 
+        } else if (cents > GREEN_LIMIT && cents <= YELLOW_LIMIT) {
+            document.getElementById('zone-sharp-yellow').style.opacity = '1';
+            detectedEl.style.color = "#ffcc00"; 
+        } else if (cents > YELLOW_LIMIT) {
+            document.getElementById('zone-sharp-red').style.opacity = '1';
+            detectedEl.style.color = "#ff3b30"; 
+        } else if (cents < -GREEN_LIMIT && cents >= -YELLOW_LIMIT) {
+            document.getElementById('zone-flat-yellow').style.opacity = '1';
+            detectedEl.style.color = "#ffcc00";
+        } else if (cents < -YELLOW_LIMIT) {
+            document.getElementById('zone-flat-red').style.opacity = '1';
+            detectedEl.style.color = "#ff3b30";
         }
+    }
 
-        function updateBassUI(freq) {
-            if (freq === 0) {
-                circle.style.backgroundColor = "#333";
-                hzDisplay.textContent = "-- Hz";
-                hzDisplay.style.color = "#555";
-                noteDisplay.textContent = "Silence";
-            }
+    function resetVisuals() {
+        document.querySelectorAll('.indicator-zone').forEach(el => el.style.opacity = '0.1');
+        const core = document.getElementById('anchor-core');
+        core.classList.remove('locked');
+        document.getElementById('detected-note').innerText = "--";
+        document.getElementById('detected-note').style.color = "#888";
+    }
+
+    function updateTargetDisplay() {
+        if (baseSequence.length === 0) return;
+        const step = baseSequence[currentIndex];
+        const nextStep = (currentIndex < baseSequence.length - 1) ? baseSequence[currentIndex + 1] : null;
+        
+        const currentNoteName = getTransposedNote(step.note, step.octave, currentTranspose);
+        setText('current-lyric', `Step ${currentIndex + 1}`);
+        setText('target-note', currentNoteName);
+        
+        if (droneActive) updateDroneFreq();
+
+        if (nextStep) {
+            const nextNoteName = getTransposedNote(nextStep.note, nextStep.octave, currentTranspose);
+            setText('hud-next', `Next: ${nextNoteName}`);
+        } else {
+            setText('hud-next', "END");
         }
+    }
 
-        function getNote(freq) {
-            const noteNum = 12 * (Math.log(freq / 440) / Math.log(2));
-            const noteIndex = Math.round(noteNum) + 69;
-            const note = notes[noteIndex % 12];
-            const octave = Math.floor(noteIndex / 12) - 1;
-            return note + octave;
-        }
-        if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js');
-    });
-}
+    // HTTPS CHECK
+    if (location.protocol !== 'https:') {
+        alert("Please enable HTTPS in the server");
+    }
 
-    </script>
+    // INIT LOAD
+    loadData();
+
+</script>
 </body>
 </html>
-
