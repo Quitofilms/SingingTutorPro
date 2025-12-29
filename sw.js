@@ -1,11 +1,10 @@
-// VITAL: This name must be different from the Bass Tracker app
-const CACHE_NAME = 'singing-tutor-v1'; 
+// VITAL: Unique name for this app to avoid conflict with Bass Tracker
+const CACHE_NAME = 'anchor-app-v1'; 
 
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
-  // Icons are now active for the Singing Tutor:
   './icon-192.png',
   './icon-512.png'
 ];
@@ -20,7 +19,7 @@ self.addEventListener('install', (e) => {
   );
 });
 
-// Activate Event: Delete old caches (including accidental Bass Tracker ones)
+// Activate Event: Delete old caches 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keyList) => {
